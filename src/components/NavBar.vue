@@ -21,7 +21,7 @@ export default {
   },
   setup(){
     // 导航栏
-    const activeIndex = ref('1');
+    const activeIndex = ref('1')
 
     return { activeIndex }
   }
