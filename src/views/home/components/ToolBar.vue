@@ -1,46 +1,38 @@
 <template>
   <div class="tool-bar">
-    <el-select v-model="value" placeholder="请选择" class="tool-select">
-      <el-option
-        v-for="item in options"
-        :key="item.value"
-        :label="item.label"
-        :value="item.value">
-      </el-option>
-    </el-select>
+    <div class="search">
+      <el-input
+        placeholder="请输入内容"
+        v-model="value">
+        <template #prefix>
+          <i class="el-input__icon el-icon-search"></i>
+        </template>
+      </el-input>
+      <el-button type="primary" class="search-start">搜索</el-button>
+    </div>
+     <el-button @click="goto" type="success">新日志</el-button>
   </div>
 </template>
 
 <script>
 import { ref } from 'vue'
-import { ElSelect, ElOption } from 'element-plus'
+import { ElInput, ElButton } from 'element-plus'
+import { useRouter } from 'vue-router';
 export default {
   components: {
-    ElSelect,
-    ElOption
+    ElInput,
+    ElButton
   },
   setup() {
-    // 日期选项
-    let options = ref([
-      {
-        value: '选项1',
-        label: '2020年12月'
-      }, {
-        value: '选项2',
-        label: '2020年11月'
-      }, {
-        value: '选项3',
-        label: '2020年10月'
-      }, {
-        value: '选项4',
-        label: '2020年9月'
-      }, {
-        value: '选项5',
-        label: '2020年8月'
-      }
-    ])
-    let value = ref('选项1')
-    return { options, value }
+    // 搜索
+    let value = ref('')
+
+    // 跳转发布
+    const router = useRouter();
+    function goto() {
+      router.push('/release')
+    }
+    return { value, goto }
   }
 }
 </script>
@@ -51,8 +43,14 @@ export default {
     display: flex;
     background-color: @theme-color;
     padding: .6rem 0;
+    justify-content: center;
   }
-  .tool-select{
-    margin-left: 1rem;
+  .search{
+    display: flex;
+    width: 80%;
+    padding: 0 .5rem;
+    .search-start{
+      margin-left: .6rem;
+    }
   }
 </style>
