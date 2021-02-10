@@ -23,7 +23,11 @@ export default {
     // 导航栏
     const activeIndex = ref('1')
 
-    return { activeIndex }
+    // 点击导航栏
+    function handleSelect(){
+      console.log(null);
+    }
+    return { activeIndex, handleSelect }
   }
 }
 </script>

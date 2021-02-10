@@ -1,7 +1,7 @@
 <template>
   <el-form ref="form" :model="formData" label-width="80px">
     <el-form-item label="标题">
-    <el-input v-model="formData.name" placeholder="输入标题"></el-input>
+    <el-input v-model="formData.title" placeholder="输入标题"></el-input>
     </el-form-item>
     <el-form-item label="描述">
       <el-input type="textarea" :rows="5" v-model="formData.desc" placeholder="输入内容描述"></el-input>
@@ -15,28 +15,75 @@
         @close="handleClose(tag)">
         {{tag.desc}}<span>&yen;{{tag.money}}</span>
       </el-tag>
-      <el-button class="button-new-tag" size="small" @click="showInput">+ 添加标签</el-button>
+      <el-button class="button-new-tag" size="small" @click="dialogTags.visible = true">+ 添加标签</el-button>
     </el-form-item>
     <el-form-item label="上传图片">
       <el-upload
         action="http://127.0.0.1/testing/index.php"
         list-type="picture-card"
-        :on-preview="handlePictureCardPreview"
+        :on-preview="handlePreview"
         :on-remove="handleRemove"
+        :on-success="handleSuccess"
+        :on-error="handleError"
         :file-list="formData.files"
         >
         <i class="el-icon-plus"></i>
       </el-upload>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" class="blog-submit">提交</el-button>
+      <el-button type="primary" class="blog-submit" @click="sendData">提交</el-button>
     </el-form-item>
   </el-form>
+
+  <el-dialog v-model="dialog.visible">
+    <img :src="dialog.imgUrl" alt="预览图片" class="preview">
+  </el-dialog>
+
+  <el-dialog title="添加标签" v-model="dialogTags.visible">
+  <el-form :model="dialogTags.formData">
+    <el-row>
+      <el-form-item>
+        <el-select v-model="dialogTags.formData.type_value" placeholder="请选择">
+          <el-option
+            v-for="item in dialogTags.type"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item style="margin-left:1rem;">
+        <el-input v-model="dialogTags.formData.desc" placeholder="请输入描述"></el-input>
+      </el-form-item>
+    </el-row>
+    <el-row>
+      <el-form-item style="margin-right:1rem;">
+        <el-input v-model="dialogTags.formData.money" placeholder="请输入金额"></el-input>
+      </el-form-item>
+      <el-form-item>
+        <el-select v-model="dialogTags.formData.account_value" placeholder="请选择账户">
+          <el-option
+            v-for="item in dialogTags.account"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+        </el-select>
+      </el-form-item>
+    </el-row>
+  </el-form>
+  <template #footer>
+    <span class="dialog-footer">
+      <el-button @click="dialogTags.visible = false">取 消</el-button>
+      <el-button type="primary" @click="addTag">确 定</el-button>
+    </span>
+  </template>
+</el-dialog>
 </template>
 
 <script>
 import { reactive } from 'vue'
-import { ElForm, ElFormItem, ElInput, ElTag, ElButton, ElUpload, ElMessage } from 'element-plus'
+import { ElRow, ElSelect, ElOption, ElForm, ElFormItem, ElInput, ElTag, ElButton, ElUpload, ElMessage, ElDialog } from 'element-plus'
 export default {
   name: "Blog",
   components: {
@@ -45,43 +92,103 @@ export default {
     ElInput,
     ElTag,
     ElButton,
-    ElUpload
+    ElUpload,
+    ElDialog,
+    ElSelect,
+    ElOption,
+    ElRow
   },
   setup() {
     // 表单内容
-    let formData = reactive({
-      name: '',
+    const formData = reactive({
+      title: '',
       desc: '',
       tags: [
         { 
-          id: 1,
           type: '类别1',
-          desc: '机票',
-          money: 1000,
+          desc: '编辑duck不必',
+          money: 99999999999999,
           account: '招商'
         },
         { 
-          id: 2,
           type: '类别2',
-          desc: '早茶',
-          money: 100,
+          desc: '我哭了你呢',
+          money: 555555555555555555n,
           account: '支付宝'
         }
       ],
       files: [
         { 
-          url: 'http://oss.byone.top/o_1dmdfurov7661b9m1t7le201orba.jpeg'
+          uid: 0,
+          url: 'http://oss.byone.top/o_1dmdfurov7661b9m1t7le201orba.jpeg',
+          status: 'success'
         },
         {
-          url: 'https://www.tietu8.com/uploads/allimg/c210203/1612345414O0-1215X.jpg'
+          uid: 0,
+          url: 'https://www.tietu8.com/uploads/allimg/c210203/1612345414O0-1215X.jpg',
+          status: 'success'
         }
       ]
     })
 
+    // 图片预览弹窗
+    const dialog = reactive({
+      visible: false,
+      imgUrl: ''
+    })
+    // 标签表单弹窗
+    const dialogTags = reactive({
+      visible: false, 
+      type: [{
+        value: '选项1',
+        label: '黄金糕'
+      },{
+        value: '选项2',
+        label: '黄金'
+      }],
+      account:[{
+        value: 0,
+        label: '支付宝'
+      },{
+        value: 1,
+        label: '微信'
+      }],
+      formData:{
+        account_value: 0,
+        type_value: '选项1',
+        desc: '',
+        money: undefined
+      }
+    })
+    
+    // 添加标签
+    function addTag() {
+      formData.tags.push(dialogTags.formData)
+      dialogTags.formData = {
+        account_value: 0,
+        type_value: '选项1',
+        desc: '',
+        money: undefined
+      }
+      dialogTags.visible = false
+    }
+
+    // 预览图片
+    function handlePreview(file) {
+      console.log(file);
+      dialog.imgUrl = file.url
+      dialog.visible = true
+    }
 
     // 删除图片
     function handleRemove(file) {
-        console.log(file);
+      let id = formData.files.findIndex((e) => e.uid === file.uid)
+      if(-1 != id) {
+        formData.files.splice(id, 1)
+        ElMessage.success('图片删除成功');
+      }else{
+        ElMessage.error('图片删除错误');
+      }
     }
 
     // 上传失败
@@ -90,11 +197,27 @@ export default {
     }
 
     // 上传成功
-    function handleSuccess() {
+    function handleSuccess(res) {
       ElMessage.success('图片上传成功');
+      formData.files.push({
+        status: 'success',
+        uid: res.uid,
+        url: res.url
+      })
     }
 
-    return { formData, handleRemove, handleError, handleSuccess }
+    // 关闭标签
+    function handleClose(tag) {
+      let id = formData.tags.findIndex(e => e.desc === tag.desc)
+      formData.tags.splice(id, 1)
+    }
+
+    // 提交数据
+    function sendData() {
+      console.log(formData);
+    }
+
+    return { formData, handleRemove, handleError, handleSuccess, dialog, handlePreview, handleClose, dialogTags, addTag, sendData }
   }
 }
 </script>
@@ -118,5 +241,9 @@ export default {
   }
   .blog-submit{
     padding: 0 3rem;
+  }
+  .preview{
+    width: 100%;
+    height: 100%;
   }
 </style>

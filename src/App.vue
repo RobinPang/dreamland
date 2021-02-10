@@ -1,9 +1,11 @@
 <template>
   <app-container>
     <nav-bar />
-    <keep-alive>
-      <router-view/>
-    </keep-alive>
+      <router-view  v-slot="{ Component }">
+        <keep-alive>
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
   </app-container>
 </template>
 
